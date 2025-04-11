@@ -1,1 +1,2 @@
-// Flows will be imported for their side effects in this file.
+import '@/ai/flows/extract-keywords.ts';
+import '@/ai/flows/analyze-on-page-seo.ts';
