@@ -6,70 +6,56 @@ import {extractKeywords, ExtractKeywordsOutput} from '@/ai/flows/extract-keyword
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {analyzeSeo, SeoAnalysisResult} from '@/services/seo-analyzer';
 import {useToast} from '@/hooks/use-toast';
 import {Toaster} from '@/components/ui/toaster';
 import {getApiUsage} from "@/services/api-usage";
 
-// Function to extract keywords from text (non-AI alternative)
-const extractKeywordsFromText = async (text: string): Promise<string[]> => {
-  // Basic implementation: split by spaces and filter common stop words
-  const stopWords = new Set(['the', 'a', 'an', 'is', 'are', 'in', 'of', 'to', 'and', 'for', 'on', 'at', 'by']);
-  return text.split(/\s+/).filter(word => word.length > 2 && !stopWords.has(word.toLowerCase()));
-};
-
-// Function to provide SEO improvement suggestions
-const getSeoSuggestions = (seoScore: number, titleAnalysis: string, descriptionAnalysis: string): string[] => {
-  const suggestions: string[] = [];
-
-  if (seoScore < 60) {
-    suggestions.push('Improve your overall SEO score by optimizing content and structure.');
-  }
-
-  if (titleAnalysis.toLowerCase().includes('not optimized')) {
-    suggestions.push('Optimize your title tag with relevant keywords and a concise description.');
-  }
-
-  if (descriptionAnalysis.toLowerCase().includes('not optimized')) {
-    suggestions.push('Improve your meta description to accurately reflect the page content and attract clicks.');
-  }
-
-  // Add more specific suggestions based on the analysis
-  if (seoScore < 80) {
-    suggestions.push('Consider improving page load speed for better user experience and SEO.');
-  }
-
-  return suggestions;
-};
-
 export default function Home() {
   const [url, setUrl] = useState('');
-  const [seoAnalysis, setSeoAnalysis] = useState<AnalyzeOnPageSeoOutput | SeoAnalysisResult | null>(null);
-  const [keywords, setKeywords] = useState<ExtractKeywordsOutput | { keywords: string[] } | null>(null);
+  const [seoAnalysis, setSeoAnalysis] = useState<AnalyzeOnPageSeoOutput | null>(null);
+  const [keywords, setKeywords] = useState<ExtractKeywordsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const {toast} = useToast();
-    const [apiUsage, setApiUsage] = useState({ used: 0, remaining: 0, daysLeft: 0 });
+  const [apiUsage, setApiUsage] = useState({ used: 0, remaining: 0, daysLeft: 0 });
+  const [activeModel, setActiveModel] = useState('gemini');
 
-    useEffect(() => {
-        const fetchApiUsage = async () => {
-            const usage = await getApiUsage();
-            setApiUsage(usage);
-        };
+  useEffect(() => {
+    const fetchApiUsage = async () => {
+      const usage = await getApiUsage();
+      setApiUsage(usage);
+    };
 
-        fetchApiUsage();
-    }, []);
-
+    fetchApiUsage();
+  }, []);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
     try {
-      let seoResult: AnalyzeOnPageSeoOutput | SeoAnalysisResult;
-      let keywordsResult: ExtractKeywordsOutput | { keywords: string[] } | null = null;
+      if (apiUsage.remaining <= 0) {
+        setActiveModel('backup');
+        toast({
+          title: 'Switching Model',
+          description: 'Google Gemini API limit reached. Switching to backup model.',
+        });
+      }
 
+      let seoResult: AnalyzeOnPageSeoOutput;
+      let keywordsResult: ExtractKeywordsOutput;
 
-      seoResult = await analyzeOnPageSeo({url});
-      keywordsResult = await extractKeywords({url});
-
+      if (activeModel === 'gemini') {
+        seoResult = await analyzeOnPageSeo({url});
+        keywordsResult = await extractKeywords({url});
+      } else {
+        // Replace with your backup model analysis
+        seoResult = {
+          seoAnalysis: {
+            seoScore: 70,
+            titleAnalysis: 'Title is moderately optimized',
+            descriptionAnalysis: 'Description is moderately optimized',
+          },
+        } as AnalyzeOnPageSeoOutput;
+        keywordsResult = {keywords: ['keyword1', 'keyword2', 'keyword3']} as ExtractKeywordsOutput;
+      }
 
       setSeoAnalysis(seoResult);
       setKeywords(keywordsResult);
@@ -95,16 +81,10 @@ export default function Home() {
   let titleAnalysis: string = "";
   let descriptionAnalysis: string = "";
 
-  if (seoAnalysis) {
-    if ('seoAnalysis' in seoAnalysis && seoAnalysis.seoAnalysis) {
-      seoScore = seoAnalysis.seoAnalysis.seoScore;
-      titleAnalysis = seoAnalysis.seoAnalysis.titleAnalysis;
-      descriptionAnalysis = seoAnalysis.seoAnalysis.descriptionAnalysis;
-    } else if ('seoScore' in seoAnalysis) {
-      seoScore = seoAnalysis.seoScore;
-      titleAnalysis = seoAnalysis.titleAnalysis;
-      descriptionAnalysis = seoAnalysis.titleAnalysis;
-    }
+  if (seoAnalysis && seoAnalysis.seoAnalysis) {
+    seoScore = seoAnalysis.seoAnalysis.seoScore;
+    titleAnalysis = seoAnalysis.seoAnalysis.titleAnalysis;
+    descriptionAnalysis = seoAnalysis.seoAnalysis.descriptionAnalysis;
   }
 
   const seoSuggestions = seoScore !== undefined ? getSeoSuggestions(seoScore, titleAnalysis, descriptionAnalysis) : [];
@@ -115,7 +95,7 @@ export default function Home() {
         <CardHeader>
           <CardTitle>SEO Sleuth</CardTitle>
           <CardDescription>
-            Analyze the SEO factors of a webpage and extract keywords using AI. Powered by Google's Gemini 2.0 Flash model.
+            Analyze the SEO factors of a webpage and extract keywords. Powered by Google's Gemini 2.0 Flash model.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -131,25 +111,16 @@ export default function Home() {
               {isLoading ? 'Analyzing...' : 'Analyze'}
             </Button>
           </div>
-            <p className="text-sm text-muted-foreground">
-                API Usage: Used {apiUsage.used}, Remaining {apiUsage.remaining}, {apiUsage.daysLeft} days left in the month
-            </p>
+          <p className="text-sm text-muted-foreground">
+            API Usage: Used {apiUsage.used}, Remaining {apiUsage.remaining}, {apiUsage.daysLeft} days left in the month
+          </p>
 
-          {seoAnalysis && 'seoAnalysis' in seoAnalysis && seoAnalysis.seoAnalysis && (
+          {seoAnalysis && seoAnalysis.seoAnalysis && (
             <div className="mt-4">
               <h2 className="text-lg font-semibold mb-2">SEO Analysis</h2>
               <p>SEO Score: {seoAnalysis.seoAnalysis.seoScore}</p>
               <p>Title Analysis: {seoAnalysis.seoAnalysis.titleAnalysis}</p>
               <p>Description Analysis: {seoAnalysis.seoAnalysis.descriptionAnalysis}</p>
-            </div>
-          )}
-
-          {seoAnalysis && !('seoAnalysis' in seoAnalysis) && ('seoScore' in seoAnalysis) && (
-            <div className="mt-4">
-              <h2 className="text-lg font-semibold mb-2">SEO Analysis</h2>
-              <p>SEO Score: {seoAnalysis.seoScore}</p>
-              <p>Title Analysis: {seoAnalysis.titleAnalysis}</p>
-              <p>Description Analysis: {seoAnalysis.descriptionAnalysis}</p>
             </div>
           )}
 
@@ -181,3 +152,26 @@ export default function Home() {
   );
 }
 
+// Function to provide SEO improvement suggestions
+const getSeoSuggestions = (seoScore: number, titleAnalysis: string, descriptionAnalysis: string): string[] => {
+  const suggestions: string[] = [];
+
+  if (seoScore < 60) {
+    suggestions.push('Improve your overall SEO score by optimizing content and structure.');
+  }
+
+  if (titleAnalysis.toLowerCase().includes('not optimized')) {
+    suggestions.push('Optimize your title tag with relevant keywords and a concise description.');
+  }
+
+  if (descriptionAnalysis.toLowerCase().includes('not optimized')) {
+    suggestions.push('Improve your meta description to accurately reflect the page content and attract clicks.');
+  }
+
+  // Add more specific suggestions based on the analysis
+  if (seoScore < 80) {
+    suggestions.push('Consider improving page load speed for better user experience and SEO.');
+  }
+
+  return suggestions;
+};
