@@ -8,7 +8,7 @@ import {Input} from '@/components/ui/input';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {useToast} from '@/hooks/use-toast';
 import {Toaster} from '@/components/ui/toaster';
-import {getApiUsage} from "@/services/api-usage";
+import {getSeoSuggestions} from "@/lib/utils";
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -16,46 +16,12 @@ export default function Home() {
   const [keywords, setKeywords] = useState<ExtractKeywordsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const {toast} = useToast();
-  const [apiUsage, setApiUsage] = useState({ used: 0, remaining: 0, daysLeft: 0 });
-  const [activeModel, setActiveModel] = useState('gemini');
-
-  useEffect(() => {
-    const fetchApiUsage = async () => {
-      const usage = await getApiUsage();
-      setApiUsage(usage);
-    };
-
-    fetchApiUsage();
-  }, []);
 
   const handleAnalyze = async () => {
     setIsLoading(true);
     try {
-      if (apiUsage.remaining <= 0) {
-        setActiveModel('backup');
-        toast({
-          title: 'Switching Model',
-          description: 'Google Gemini API limit reached. Switching to backup model.',
-        });
-      }
-
-      let seoResult: AnalyzeOnPageSeoOutput;
-      let keywordsResult: ExtractKeywordsOutput;
-
-      if (activeModel === 'gemini') {
-        seoResult = await analyzeOnPageSeo({url});
-        keywordsResult = await extractKeywords({url});
-      } else {
-        // Replace with your backup model analysis
-        seoResult = {
-          seoAnalysis: {
-            seoScore: 70,
-            titleAnalysis: 'Title is moderately optimized',
-            descriptionAnalysis: 'Description is moderately optimized',
-          },
-        } as AnalyzeOnPageSeoOutput;
-        keywordsResult = {keywords: ['keyword1', 'keyword2', 'keyword3']} as ExtractKeywordsOutput;
-      }
+      const seoResult: AnalyzeOnPageSeoOutput = await analyzeOnPageSeo({url});
+      const keywordsResult: ExtractKeywordsOutput = await extractKeywords({url});
 
       setSeoAnalysis(seoResult);
       setKeywords(keywordsResult);
@@ -111,9 +77,6 @@ export default function Home() {
               {isLoading ? 'Analyzing...' : 'Analyze'}
             </Button>
           </div>
-          <p className="text-sm text-muted-foreground">
-            API Usage: Used {apiUsage.used}, Remaining {apiUsage.remaining}, {apiUsage.daysLeft} days left in the month
-          </p>
 
           {seoAnalysis && seoAnalysis.seoAnalysis && (
             <div className="mt-4">
@@ -151,28 +114,3 @@ export default function Home() {
     </div>
   );
 }
-
-// Function to provide SEO improvement suggestions
-const getSeoSuggestions = (seoScore: number, titleAnalysis: string, descriptionAnalysis: string): string[] => {
-  const suggestions: string[] = [];
-
-  if (seoScore < 60) {
-    suggestions.push('Improve your overall SEO score by optimizing content and structure.');
-  }
-
-  if (titleAnalysis.toLowerCase().includes('not optimized')) {
-    suggestions.push('Optimize your title tag with relevant keywords and a concise description.');
-  }
-
-  if (descriptionAnalysis.toLowerCase().includes('not optimized')) {
-    suggestions.push('Improve your meta description to accurately reflect the page content and attract clicks.');
-  }
-
-  // Add more specific suggestions based on the analysis
-  if (seoScore < 80) {
-    suggestions.push('Consider improving page load speed for better user experience and SEO.');
-  }
-
-  return suggestions;
-};
-
