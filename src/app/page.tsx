@@ -1,15 +1,15 @@
 'use client';
 
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import {analyzeOnPageSeo, AnalyzeOnPageSeoOutput} from '@/ai/flows/analyze-on-page-seo';
 import {extractKeywords, ExtractKeywordsOutput} from '@/ai/flows/extract-keywords';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {analyzeSeo, SeoAnalysisResult} from '@/services/seo-analyzer';
-import {Switch} from '@/components/ui/switch';
 import {useToast} from '@/hooks/use-toast';
 import {Toaster} from '@/components/ui/toaster';
+import {getApiUsage} from "@/services/api-usage";
 
 // Function to extract keywords from text (non-AI alternative)
 const extractKeywordsFromText = async (text: string): Promise<string[]> => {
@@ -48,6 +48,17 @@ export default function Home() {
   const [keywords, setKeywords] = useState<ExtractKeywordsOutput | { keywords: string[] } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const {toast} = useToast();
+    const [apiUsage, setApiUsage] = useState({ used: 0, remaining: 0, daysLeft: 0 });
+
+    useEffect(() => {
+        const fetchApiUsage = async () => {
+            const usage = await getApiUsage();
+            setApiUsage(usage);
+        };
+
+        fetchApiUsage();
+    }, []);
+
 
   const handleAnalyze = async () => {
     setIsLoading(true);
@@ -55,10 +66,10 @@ export default function Home() {
       let seoResult: AnalyzeOnPageSeoOutput | SeoAnalysisResult;
       let keywordsResult: ExtractKeywordsOutput | { keywords: string[] } | null = null;
 
-    
-        seoResult = await analyzeOnPageSeo({url});
-        keywordsResult = await extractKeywords({url});
-    
+
+      seoResult = await analyzeOnPageSeo({url});
+      keywordsResult = await extractKeywords({url});
+
 
       setSeoAnalysis(seoResult);
       setKeywords(keywordsResult);
@@ -92,7 +103,7 @@ export default function Home() {
     } else if ('seoScore' in seoAnalysis) {
       seoScore = seoAnalysis.seoScore;
       titleAnalysis = seoAnalysis.titleAnalysis;
-      descriptionAnalysis = seoAnalysis.descriptionAnalysis;
+      descriptionAnalysis = seoAnalysis.titleAnalysis;
     }
   }
 
@@ -104,7 +115,7 @@ export default function Home() {
         <CardHeader>
           <CardTitle>SEO Sleuth</CardTitle>
           <CardDescription>
-            Enter a URL to analyze its SEO factors and extract keywords. Powered by Google's Gemini 2.0 Flash model.
+            Analyze the SEO factors of a webpage and extract keywords using AI. Powered by Google's Gemini 2.0 Flash model.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -120,6 +131,9 @@ export default function Home() {
               {isLoading ? 'Analyzing...' : 'Analyze'}
             </Button>
           </div>
+            <p className="text-sm text-muted-foreground">
+                API Usage: Used {apiUsage.used}, Remaining {apiUsage.remaining}, {apiUsage.daysLeft} days left in the month
+            </p>
 
           {seoAnalysis && 'seoAnalysis' in seoAnalysis && seoAnalysis.seoAnalysis && (
             <div className="mt-4">
