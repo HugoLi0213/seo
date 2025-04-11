@@ -1,14 +1,14 @@
 'use client';
 
-import { useState } from 'react';
-import { analyzeOnPageSeo, AnalyzeOnPageSeoOutput } from '@/ai/flows/analyze-on-page-seo';
-import { extractKeywords, ExtractKeywordsOutput } from '@/ai/flows/extract-keywords';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { Toaster } from '@/components/ui/toaster';
-import { getSeoSuggestions } from "@/lib/utils";
+import {useState} from 'react';
+import {analyzeOnPageSeo, AnalyzeOnPageSeoOutput} from '@/ai/flows/analyze-on-page-seo';
+import {extractKeywords, ExtractKeywordsOutput} from '@/ai/flows/extract-keywords';
+import {Button} from '@/components/ui/button';
+import {Input} from '@/components/ui/input';
+import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
+import {useToast} from '@/hooks/use-toast';
+import {Toaster} from '@/components/ui/toaster';
+import {getSeoSuggestions} from "@/lib/utils";
 
 function isValidUrl(url: string): boolean {
   try {
@@ -24,7 +24,7 @@ export default function Home() {
   const [seoAnalysis, setSeoAnalysis] = useState<AnalyzeOnPageSeoOutput | null>(null);
   const [keywords, setKeywords] = useState<ExtractKeywordsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
+  const {toast} = useToast();
 
   const handleAnalyze = async () => {
     if (!url.trim()) {
@@ -47,8 +47,8 @@ export default function Home() {
 
     setIsLoading(true);
     try {
-      const seoResult: AnalyzeOnPageSeoOutput = await analyzeOnPageSeo({ url });
-      const keywordsResult: ExtractKeywordsOutput = await extractKeywords({ url });
+      const seoResult: AnalyzeOnPageSeoOutput = await analyzeOnPageSeo({url});
+      const keywordsResult: ExtractKeywordsOutput = await extractKeywords({url});
 
       setSeoAnalysis(seoResult);
       setKeywords(keywordsResult);
@@ -137,7 +137,7 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
-      <Toaster />
+      <Toaster/>
     </div>
   );
 }
