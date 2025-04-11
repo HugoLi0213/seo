@@ -47,7 +47,6 @@ export default function Home() {
   const [seoAnalysis, setSeoAnalysis] = useState<AnalyzeOnPageSeoOutput | SeoAnalysisResult | null>(null);
   const [keywords, setKeywords] = useState<ExtractKeywordsOutput | { keywords: string[] } | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [useAi, setUseAi] = useState(true); // State to control AI usage
   const {toast} = useToast();
 
   const handleAnalyze = async () => {
@@ -56,19 +55,10 @@ export default function Home() {
       let seoResult: AnalyzeOnPageSeoOutput | SeoAnalysisResult;
       let keywordsResult: ExtractKeywordsOutput | { keywords: string[] } | null = null;
 
-      if (useAi) {
+    
         seoResult = await analyzeOnPageSeo({url});
         keywordsResult = await extractKeywords({url});
-      } else {
-        seoResult = await analyzeSeo(url);
-        const response = await fetch(url);
-        const html = await response.text();
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        const textContent = doc.body.textContent || "";
-        const keywords = await extractKeywordsFromText(textContent);
-        keywordsResult = {keywords};
-      }
+    
 
       setSeoAnalysis(seoResult);
       setKeywords(keywordsResult);
@@ -114,7 +104,7 @@ export default function Home() {
         <CardHeader>
           <CardTitle>SEO Sleuth</CardTitle>
           <CardDescription>
-            Enter a URL to analyze its SEO factors and extract keywords. {useAi ? `Powered by Google's Gemini 2.0 Flash model.` : `Running without AI.`}
+            Enter a URL to analyze its SEO factors and extract keywords. Powered by Google's Gemini 2.0 Flash model.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
@@ -129,13 +119,6 @@ export default function Home() {
             <Button onClick={handleAnalyze} disabled={isLoading}>
               {isLoading ? 'Analyzing...' : 'Analyze'}
             </Button>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Switch id="ai" checked={useAi} onCheckedChange={(checked) => setUseAi(checked)} />
-            <label htmlFor="ai" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Use AI Analysis
-            </label>
           </div>
 
           {seoAnalysis && 'seoAnalysis' in seoAnalysis && seoAnalysis.seoAnalysis && (
@@ -183,3 +166,4 @@ export default function Home() {
     </div>
   );
 }
+
