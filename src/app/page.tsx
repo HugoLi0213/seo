@@ -1,6 +1,6 @@
 'use client';
 
-import {useState, useEffect} from 'react';
+import {useState} from 'react';
 import {analyzeOnPageSeo, AnalyzeOnPageSeoOutput} from '@/ai/flows/analyze-on-page-seo';
 import {extractKeywords, ExtractKeywordsOutput} from '@/ai/flows/extract-keywords';
 import {Button} from '@/components/ui/button';
@@ -18,6 +18,15 @@ export default function Home() {
   const {toast} = useToast();
 
   const handleAnalyze = async () => {
+    if (!url.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a URL to analyze.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       const seoResult: AnalyzeOnPageSeoOutput = await analyzeOnPageSeo({url});
