@@ -27,10 +27,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
-        <footer className="bg-background text-foreground p-4 text-center">
+        <footer className="absolute bottom-0 left-0 w-full bg-background text-foreground p-2 text-center text-xs">
           <p>Author: Hugo</p>
         </footer>
       </body>
     </html>
   );
 }
+
