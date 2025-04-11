@@ -34,7 +34,9 @@ export default function Home() {
       <Card>
         <CardHeader>
           <CardTitle>SEO Sleuth</CardTitle>
-          <CardDescription>Enter a URL to analyze its SEO factors and extract keywords.</CardDescription>
+          <CardDescription>
+            Enter a URL to analyze its SEO factors and extract keywords using AI powered by Google's Gemini 2.0 Flash model.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4">
           <div className="flex gap-2">
@@ -74,3 +76,4 @@ export default function Home() {
     </div>
   );
 }
+
