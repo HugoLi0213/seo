@@ -1,21 +1,30 @@
 'use client';
 
-import {useState} from 'react';
-import {analyzeOnPageSeo, AnalyzeOnPageSeoOutput} from '@/ai/flows/analyze-on-page-seo';
-import {extractKeywords, ExtractKeywordsOutput} from '@/ai/flows/extract-keywords';
-import {Button} from '@/components/ui/button';
-import {Input} from '@/components/ui/input';
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {useToast} from '@/hooks/use-toast';
-import {Toaster} from '@/components/ui/toaster';
-import {getSeoSuggestions} from "@/lib/utils";
+import { useState } from 'react';
+import { analyzeOnPageSeo, AnalyzeOnPageSeoOutput } from '@/ai/flows/analyze-on-page-seo';
+import { extractKeywords, ExtractKeywordsOutput } from '@/ai/flows/extract-keywords';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Toaster } from '@/components/ui/toaster';
+import { getSeoSuggestions } from "@/lib/utils";
+
+function isValidUrl(url: string): boolean {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.protocol === "http:" || urlObj.protocol === "https:";
+  } catch (_) {
+    return false;
+  }
+}
 
 export default function Home() {
   const [url, setUrl] = useState('');
   const [seoAnalysis, setSeoAnalysis] = useState<AnalyzeOnPageSeoOutput | null>(null);
   const [keywords, setKeywords] = useState<ExtractKeywordsOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const {toast} = useToast();
+  const { toast } = useToast();
 
   const handleAnalyze = async () => {
     if (!url.trim()) {
@@ -27,10 +36,19 @@ export default function Home() {
       return;
     }
 
+    if (!isValidUrl(url)) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a correct web address starting with http:// or https://.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const seoResult: AnalyzeOnPageSeoOutput = await analyzeOnPageSeo({url});
-      const keywordsResult: ExtractKeywordsOutput = await extractKeywords({url});
+      const seoResult: AnalyzeOnPageSeoOutput = await analyzeOnPageSeo({ url });
+      const keywordsResult: ExtractKeywordsOutput = await extractKeywords({ url });
 
       setSeoAnalysis(seoResult);
       setKeywords(keywordsResult);
@@ -119,7 +137,7 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
-      <Toaster/>
+      <Toaster />
     </div>
   );
 }
