@@ -175,3 +175,4 @@ const getSeoSuggestions = (seoScore: number, titleAnalysis: string, descriptionA
 
   return suggestions;
 };
+
