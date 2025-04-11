@@ -27,7 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
-        <footer className="absolute bottom-0 left-0 w-full bg-background text-foreground p-2 text-center text-xs">
+        <footer className="fixed bottom-0 left-0 w-full bg-background text-foreground p-2 text-center text-xs">
           © 2025 Hugo. All rights reserved. | Built with Next.js | Hosted on Vercel
         </footer>
       </body>
